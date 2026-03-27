@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Observateur Ultimate — EPS 6ème</title>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --dark: #1e293b;
+  --medium: #475569;
+  --light: #94a3b8;
+  --border: #e2e8f0;
+  --team-a: #dc2626;
+  --team-a-bg: #fee2e2;
+  --team-b: #2563eb;
+  --team-b-bg: #dbeafe;
+  --green: #16a34a;
+  --orange: #ea580c;
+  --gold: #ca8a04;
+  --purple: #7c3aed;
+  --r: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* ─── SETUP ─────────────────────────────────── */
+#screen-setup {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+.setup-title {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.setup-title h1 { font-size: 26px; font-weight: 800; }
+.setup-title p { color: var(--medium); font-size: 14px; margin-top: 4px; }
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) { .setup-grid { grid-template-columns: 1fr; } }
+
+.team-card {
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.team-card.card-a { border-top: 5px solid var(--team-a); }
+.team-card.card-b { border-top: 5px solid var(--team-b); }
+.team-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+
+.field-label { font-size: 12px; font-weight: 600; color: var(--medium); margin-bottom: 5px; letter-spacing: .04em; text-transform: uppercase; }
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  outline: none;
+  margin-bottom: 14px;
+}
+input[type="text"]:focus { border-color: #3b82f6; }
+
+.player-list { list-style: none; }
+.player-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.player-item input { margin-bottom: 0; flex: 1; }
+
+.btn-remove {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #fee2e2;
+  color: var(--team-a);
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.btn-add {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--medium);
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn-start {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 18px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: var(--r);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37,99,235,.35);
+  letter-spacing: .02em;
+}
+.btn-start:active { opacity: .88; transform: scale(.98); }
+
+/* ─── MATCH HEADER ───────────────────────────── */
+#screen-match {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+.match-header {
+  background: var(--dark);
+  color: white;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 72px;
+}
+
+.score-block { text-align: center; min-width: 90px; }
+.score-team-name { font-size: 11px; opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+.score-pts {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: transform .15s;
+}
+.score-pts.bump { animation: bump .25s ease; }
+@keyframes bump { 0%,100%{transform:scale(1)} 50%{transform:scale(1.35)} }
+.score-sub { font-size: 11px; opacity: .55; margin-top: 2px; }
+
+.timer-block { text-align: center; flex-shrink: 0; }
+.timer-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+.timer-ctl {
+  display: block;
+  font-size: 10px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  color: white;
+  border-radius: 20px;
+  padding: 2px 10px;
+  cursor: pointer;
+  margin: 3px auto 0;
+  white-space: nowrap;
+}
+
+.btn-bilan {
+  padding: 7px 14px;
+  background: rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-bilan:active { background: rgba(255,255,255,.2); }
+
+/* ─── TEAM TABS ──────────────────────────────── */
+.team-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--border);
+}
+.team-tab {
+  flex: 1;
+  padding: 13px 8px;
+  border: none;
+  background: white;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--medium);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.team-tab.tab-active-a { color: var(--team-a); border-bottom-color: var(--team-a); }
+.team-tab.tab-active-b { color: var(--team-b); border-bottom-color: var(--team-b); }
+
+/* ─── TEAM PANEL ─────────────────────────────── */
+.team-panel {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 14px 80px;
+  background: var(--bg);
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--light);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 10px;
+}
+
+/* ─── EVENT BUTTONS ──────────────────────────── */
+.events-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.evt-btn {
+  padding: 14px 8px;
+  border: none;
+  border-radius: var(--r);
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.2;
+  transition: transform .1s, opacity .1s;
+  user-select: none;
+}
+.evt-btn:active { transform: scale(.94); opacity: .85; }
+.evt-btn .ev-val { font-size: 22px; font-weight: 800; }
+.evt-btn .ev-lbl { font-size: 12px; font-weight: 600; margin-top: 2px; opacity: .9; }
+.ev-zone { background: var(--green); }
+.ev-but  { background: var(--gold); }
+.ev-recul { background: var(--orange); }
+.ev-perte { background: var(--team-a); }
+
+.undo-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+.btn-undo {
+  padding: 6px 14px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--medium);
+  cursor: pointer;
+}
+
+/* ─── PLAYER OBS CARDS ───────────────────────── */
+.player-obs-card {
+  background: white;
+  border-radius: var(--r);
+  padding: 12px 12px 10px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.poc-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+
+.obs-btns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.obs-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 4px 7px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform .1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.obs-btn:active { transform: scale(.9); }
+.obs-icon { font-size: 20px; line-height: 1; }
+.obs-count {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-width: 20px;
+  text-align: center;
+}
+.obs-lbl    { font-size: 9px; font-weight: 700; text-align: center; line-height: 1.2; }
+.obs-sublbl { font-size: 8px; font-weight: 400; text-align: center; line-height: 1.2; opacity: .75; }
+
+.ob-perte  { background: #fee2e2; color: var(--team-a); }
+.ob-passe  { background: #dcfce7; color: var(--green); }
+.ob-def    { background: #dbeafe; color: var(--team-b); }
+.ob-faute  { background: #ffedd5; color: var(--orange); }
+
+/* Engagement level row */
+.engage-row {
+  background: #f5f3ff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.engage-row-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.eng-btns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.eng-btn {
+  padding: 7px 2px 6px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--medium);
+  line-height: 1.3;
+  transition: transform .1s;
+  user-select: none;
+}
+.eng-btn:active { transform: scale(.93); }
+.eng-btn small { display: block; font-size: 8.5px; font-weight: 400; color: var(--light); margin-top: 1px; }
+.eng-sel-1 { background: #fee2e2; color: var(--team-a); border-color: var(--team-a); }
+.eng-sel-2 { background: #ffedd5; color: var(--orange); border-color: var(--orange); }
+.eng-sel-3 { background: #dcfce7; color: var(--green);  border-color: var(--green); }
+.eng-sel-4 { background: #dbeafe; color: var(--team-b); border-color: var(--team-b); }
+
+.poc-undo {
+  text-align: right;
+  font-size: 11px;
+  color: var(--light);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+  width: 100%;
+}
+
+/* Flash count */
+@keyframes flash-num { 0%,100%{transform:scale(1)} 40%{transform:scale(1.5)} }
+.num-flash { animation: flash-num .25s ease; }
+
+/* ─── BILAN ──────────────────────────────────── */
+#screen-bilan {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+.bilan-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.bilan-topbar h1 { font-size: 22px; font-weight: 800; }
+.btn-back {
+  padding: 8px 16px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.section-card {
+  background: white;
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.section-card h2 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.section-card .subtitle { font-size: 12px; color: var(--medium); margin-bottom: 14px; }
+
+.d1-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.d1-team {
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.d1-team.ta { background: var(--team-a-bg); }
+.d1-team.tb { background: var(--team-b-bg); }
+.d1-tname { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.d1-buts { font-size: 13px; color: var(--medium); }
+.d1-bm { font-size: 28px; font-weight: 800; margin: 4px 0; }
+.d1-result { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.d1-level { font-size: 15px; font-weight: 700; }
+
+.lv1 { color: #dc2626; }
+.lv2 { color: #ea580c; }
+.lv3 { color: #16a34a; }
+.lv4 { color: #2563eb; }
+
+.d1-legend {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--medium);
+}
+
+/* Player bilan cards */
+.pb-card {
+  background: white;
+  border-radius: var(--r);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+}
+.pb-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.team-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.ba { background: var(--team-a-bg); color: var(--team-a); }
+.bb { background: var(--team-b-bg); color: var(--team-b); }
+
+.dims-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 540px) { .dims-row { grid-template-columns: 1fr; } }
+
+.dim-box {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+.dim-name { font-size: 11px; font-weight: 700; color: var(--medium); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
+.dim-data { font-size: 12px; color: var(--medium); line-height: 1.8; margin-bottom: 6px; }
+.dim-suggested { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+
+.level-picker { display: flex; gap: 4px; }
+.lp-btn {
+  flex: 1;
+  padding: 7px 0;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  background: white;
+  text-align: center;
+  color: var(--medium);
+  transition: background .15s;
+}
+.lp-btn.lp-sel-1 { background: #dc2626; color: white; border-color: #dc2626; }
+.lp-btn.lp-sel-2 { background: #ea580c; color: white; border-color: #ea580c; }
+.lp-btn.lp-sel-3 { background: #16a34a; color: white; border-color: #16a34a; }
+.lp-btn.lp-sel-4 { background: #2563eb; color: white; border-color: #2563eb; }
+
+.criteria-box {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 16px 0;
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.7;
+}
+
+.btn-print {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 20px auto 0;
+  padding: 16px;
+  background: var(--dark);
+  color: white;
+  border: none;
+  border-radius: var(--r);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media print {
+  .btn-print, .btn-back, .level-picker, .btn-bilan, .bilan-topbar button { display: none !important; }
+  body, #screen-bilan { background: white; }
+  .pb-card { break-inside: avoid; margin-bottom: 10px; }
+  .section-card { box-shadow: none; border: 1px solid #e2e8f0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SETUP
+══════════════════════════════════════════════ -->
+<div id="screen-setup">
+  <div class="setup-title">
+    <h1>🥏 Observateur Ultimate</h1>
+    <p>EPS · Cycle 3 · 6ème — Outil d'observation et d'évaluation</p>
+  </div>
+
+  <div class="setup-grid">
+    <!-- ÉQUIPE A -->
+    <div class="team-card card-a">
+      <h2 style="color:var(--team-a)">Équipe A</h2>
+      <div class="field-label">Nom de l'équipe</div>
+      <input type="text" id="ta-name" value="Équipe A">
+      <div class="field-label">Joueurs</div>
+      <ul class="player-list" id="ta-players"></ul>
+      <button class="btn-add" onclick="addPlayer('A')">＋ Ajouter un joueur</button>
+    </div>
+
+    <!-- ÉQUIPE B -->
+    <div class="team-card card-b">
+      <h2 style="color:var(--team-b)">Équipe B</h2>
+      <div class="field-label">Nom de l'équipe</div>
+      <input type="text" id="tb-name" value="Équipe B">
+      <div class="field-label">Joueurs</div>
+      <ul class="player-list" id="tb-players"></ul>
+      <button class="btn-add" onclick="addPlayer('B')">＋ Ajouter un joueur</button>
+    </div>
+  </div>
+
+  <button class="btn-start" onclick="startMatch()">▶ Commencer le match</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MATCH
+══════════════════════════════════════════════ -->
+<div id="screen-match" class="hidden">
+
+  <div class="match-header">
+    <!-- Score A -->
+    <div class="score-block">
+      <div class="score-team-name" id="hdr-a-name">Équipe A</div>
+      <div class="score-pts" id="hdr-a-bm" style="color:#fca5a5">0</div>
+      <div class="score-sub" id="hdr-a-buts">0 but</div>
+    </div>
+
+    <!-- Timer + Bilan -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="timer-block">
+        <div class="timer-value" id="timer-val">00:00</div>
+        <button class="timer-ctl" id="timer-ctl" onclick="toggleTimer()">▶ Démarrer</button>
+      </div>
+      <button class="btn-bilan" onclick="showBilan()">Bilan →</button>
+    </div>
+
+    <!-- Score B -->
+    <div class="score-block">
+      <div class="score-team-name" id="hdr-b-name">Équipe B</div>
+      <div class="score-pts" id="hdr-b-bm" style="color:#93c5fd">0</div>
+      <div class="score-sub" id="hdr-b-buts">0 but</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="team-tabs">
+    <button class="team-tab tab-active-a" id="tab-a" onclick="switchTeam('A')">Équipe A</button>
+    <button class="team-tab" id="tab-b" onclick="switchTeam('B')">Équipe B</button>
+  </div>
+
+  <!-- Panel A -->
+  <div class="team-panel" id="panel-a">
+    <div class="section-label" style="margin-bottom:10px">Score bonus / malus — Équipe A</div>
+    <div class="events-grid">
+      <button class="evt-btn ev-zone" onclick="addEvent('A','zone')">
+        <div class="ev-val">+1</div>
+        <div class="ev-lbl">Franchissement de zone</div>
+      </button>
+      <button class="evt-btn ev-but" onclick="addEvent('A','but')">
+        <div class="ev-val">+2</div>
+        <div class="ev-lbl">But marqué 🎯</div>
+      </button>
+      <button class="evt-btn ev-recul" onclick="addEvent('A','recul')">
+        <div class="ev-val">−1</div>
+        <div class="ev-lbl">Recul de zone</div>
+      </button>
+      <button class="evt-btn ev-perte" onclick="addEvent('A','perte')">
+        <div class="ev-val">−1</div>
+        <div class="ev-lbl">Perte de Frisbee</div>
+      </button>
+    </div>
+    <div class="undo-bar">
+      <button class="btn-undo" onclick="undoEvent('A')">↩ Annuler dernier événement</button>
+    </div>
+
+    <div class="section-label">Observations par joueur</div>
+    <div style="font-size:11px;color:var(--light);margin-bottom:10px;line-height:1.5">
+      Appuie sur les boutons pour noter les actions. Maintiens appuyé pour annuler.
+    </div>
+    <div id="players-panel-a"></div>
+  </div>
+
+  <!-- Panel B -->
+  <div class="team-panel hidden" id="panel-b">
+    <div class="section-label" style="margin-bottom:10px">Score bonus / malus — Équipe B</div>
+    <div class="events-grid">
+      <button class="evt-btn ev-zone" onclick="addEvent('B','zone')">
+        <div class="ev-val">+1</div>
+        <div class="ev-lbl">Franchissement de zone</div>
+      </button>
+      <button class="evt-btn ev-but" onclick="addEvent('B','but')">
+        <div class="ev-val">+2</div>
+        <div class="ev-lbl">But marqué 🎯</div>
+      </button>
+      <button class="evt-btn ev-recul" onclick="addEvent('B','recul')">
+        <div class="ev-val">−1</div>
+        <div class="ev-lbl">Recul de zone</div>
+      </button>
+      <button class="evt-btn ev-perte" onclick="addEvent('B','perte')">
+        <div class="ev-val">−1</div>
+        <div class="ev-lbl">Perte de Frisbee</div>
+      </button>
+    </div>
+    <div class="undo-bar">
+      <button class="btn-undo" onclick="undoEvent('B')">↩ Annuler dernier événement</button>
+    </div>
+
+    <div class="section-label">Observations par joueur</div>
+    <div style="font-size:11px;color:var(--light);margin-bottom:10px;line-height:1.5">
+      Appuie sur les boutons pour noter les actions. Maintiens appuyé pour annuler.
+    </div>
+    <div id="players-panel-b"></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     BILAN
+══════════════════════════════════════════════ -->
+<div id="screen-bilan" class="hidden"></div>
+
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+// ─── STATE ────────────────────────────────────
+const S = {
+  teamA: { name: 'Équipe A', players: [] },
+  teamB: { name: 'Équipe B', players: [] },
+  matchA: { bm: 0, buts: 0, events: [] },
+  matchB: { bm: 0, buts: 0, events: [] },
+  players: {},       // id → obs object
+  obsHistory: {},    // id → array of field strings (for undo)
+  activeTeam: 'A',
+  timer: { running: false, secs: 0, iv: null }
+};
+
+const EV_DELTA = { zone: 1, but: 2, recul: -1, perte: -1 };
+const LEVELS   = ['', 'Insuffisant', 'Fragile', 'Satisfaisant', 'Très bonne maîtrise'];
+const LV_COLORS= ['', '#dc2626', '#ea580c', '#16a34a', '#2563eb'];
+
+// ─── SETUP ────────────────────────────────────
+function addPlayer(team) {
+  const id = 'p' + Date.now() + Math.random().toString(36).slice(2,6);
+  const arr = team === 'A' ? S.teamA.players : S.teamB.players;
+  arr.push({ id, name: '' });
+  renderSetupPlayers(team);
+}
+
+function removePlayer(team, id) {
+  if (team === 'A') S.teamA.players = S.teamA.players.filter(p => p.id !== id);
+  else              S.teamB.players = S.teamB.players.filter(p => p.id !== id);
+  renderSetupPlayers(team);
+}
+
+function renderSetupPlayers(team) {
+  const arr = team === 'A' ? S.teamA.players : S.teamB.players;
+  const el  = document.getElementById('t' + team.toLowerCase() + '-players');
+  el.innerHTML = '';
+  arr.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.className = 'player-item';
+    li.innerHTML = `
+      <input type="text" value="${esc(p.name)}" placeholder="Joueur ${i+1}"
+        oninput="setName('${team}','${p.id}',this.value)">
+      <button class="btn-remove" onclick="removePlayer('${team}','${p.id}')">×</button>`;
+    el.appendChild(li);
+  });
+}
+
+function setName(team, id, val) {
+  const arr = team === 'A' ? S.teamA.players : S.teamB.players;
+  const p = arr.find(x => x.id === id);
+  if (p) p.name = val;
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function startMatch() {
+  // Read team names
+  S.teamA.name = document.getElementById('ta-name').value.trim() || 'Équipe A';
+  S.teamB.name = document.getElementById('tb-name').value.trim() || 'Équipe B';
+
+  // Read player names from inputs
+  ['A','B'].forEach(team => {
+    const arr = team === 'A' ? S.teamA.players : S.teamB.players;
+    const list = document.getElementById('t' + team.toLowerCase() + '-players');
+    list.querySelectorAll('input').forEach((inp, i) => {
+      if (arr[i]) arr[i].name = inp.value.trim() || ('Joueur ' + (i + 1));
+    });
+  });
+
+  // Init player obs
+  const initObs = (team, arr) => arr.forEach(p => {
+    S.players[p.id] = {
+      name: p.name, team,
+      pertes: 0, passes: 0, defenses: 0, fautes: 0, engageLevel: null,
+      lvD2: null, lvD3: null, lvD4: null
+    };
+    S.obsHistory[p.id] = [];
+  });
+  initObs('A', S.teamA.players);
+  initObs('B', S.teamB.players);
+
+  // Update header
+  document.getElementById('hdr-a-name').textContent = S.teamA.name;
+  document.getElementById('hdr-b-name').textContent = S.teamB.name;
+  document.getElementById('tab-a').textContent = S.teamA.name;
+  document.getElementById('tab-b').textContent = S.teamB.name;
+
+  // Render player panels
+  renderPlayerPanel('A');
+  renderPlayerPanel('B');
+
+  showScreen('match');
+  switchTeam('A');
+}
+
+// ─── PLAYER PANELS ───────────────────────────
+function renderPlayerPanel(team) {
+  const arr = team === 'A' ? S.teamA.players : S.teamB.players;
+  const el  = document.getElementById('players-panel-' + team.toLowerCase());
+  el.innerHTML = '';
+
+  if (!arr.length) {
+    el.innerHTML = '<p style="color:var(--light);text-align:center;padding:24px">Aucun joueur enregistré</p>';
+    return;
+  }
+
+  arr.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'player-obs-card';
+    card.id = 'poc-' + p.id;
+    card.innerHTML = `
+      <div class="poc-name">${esc(p.name)}</div>
+      <div class="obs-btns">
+        ${obsBtn(p.id,'pertes','🥏','ob-perte','Perte','mauvais catch / passe')}
+        ${obsBtn(p.id,'passes','✅','ob-passe','Passe réussie','')}
+        ${obsBtn(p.id,'defenses','🛡️','ob-def','Défense','interception / frisbee')}
+        ${obsBtn(p.id,'fautes','⚠️','ob-faute','Faute','contact / distance')}
+      </div>
+      <div class="engage-row">
+        <div class="engage-row-title">🏃 Engagement — sélectionner le niveau observé</div>
+        <div class="eng-btns">
+          ${engBtn(p.id, 1, 'N1', 'peu / pas engagé')}
+          ${engBtn(p.id, 2, 'N2', 'aléatoire')}
+          ${engBtn(p.id, 3, 'N3', 'régulier att.')}
+          ${engBtn(p.id, 4, 'N4', 'optimal att.+déf.')}
+        </div>
+      </div>
+      <button class="poc-undo" onclick="undoLastObs('${p.id}')">↩ annuler dernier compteur</button>`;
+    el.appendChild(card);
+  });
+}
+
+function obsBtn(pid, field, icon, cls, lbl, sublbl) {
+  return `<button class="obs-btn ${cls}"
+    onclick="recordObs('${pid}','${field}')"
+    oncontextmenu="ctxUndo(event,'${pid}','${field}')"
+    ontouchstart="" >
+    <span class="obs-icon">${icon}</span>
+    <span class="obs-count" id="oc-${pid}-${field}">0</span>
+    <span class="obs-lbl">${lbl}</span>
+    ${sublbl ? `<span class="obs-sublbl">${sublbl}</span>` : ''}
+  </button>`;
+}
+
+function engBtn(pid, n, label, desc) {
+  return `<button class="eng-btn" id="eng-${pid}-${n}"
+    onclick="setEngageLevel('${pid}', ${n})"
+    ontouchstart="" >
+    ${label}<small>${desc}</small>
+  </button>`;
+}
+
+function setEngageLevel(pid, n) {
+  const obs = S.players[pid];
+  if (!obs) return;
+  obs.engageLevel = (obs.engageLevel === n) ? null : n;
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('eng-' + pid + '-' + i);
+    if (el) el.className = 'eng-btn' + (obs.engageLevel === i ? ' eng-sel-' + i : '');
+  }
+}
+
+function recordObs(pid, field) {
+  const obs = S.players[pid];
+  if (!obs) return;
+  obs[field]++;
+  S.obsHistory[pid].push(field);
+  const el = document.getElementById('oc-' + pid + '-' + field);
+  if (el) {
+    el.textContent = obs[field];
+    el.classList.remove('num-flash');
+    void el.offsetWidth;
+    el.classList.add('num-flash');
+  }
+}
+
+function ctxUndo(e, pid, field) {
+  e.preventDefault();
+  decrementObs(pid, field);
+}
+
+function undoLastObs(pid) {
+  const hist = S.obsHistory[pid];
+  if (!hist || !hist.length) return;
+  const field = hist.pop();
+  decrementObs(pid, field);
+}
+
+function decrementObs(pid, field) {
+  const obs = S.players[pid];
+  if (!obs || obs[field] <= 0) return;
+  obs[field]--;
+  const el = document.getElementById('oc-' + pid + '-' + field);
+  if (el) el.textContent = obs[field];
+}
+
+// ─── MATCH EVENTS ─────────────────────────────
+function addEvent(team, type) {
+  const m = team === 'A' ? S.matchA : S.matchB;
+  m.bm += EV_DELTA[type];
+  if (type === 'but') m.buts++;
+  m.events.push(type);
+  updateHeader();
+  bumpScore(team);
+}
+
+function undoEvent(team) {
+  const m = team === 'A' ? S.matchA : S.matchB;
+  if (!m.events.length) return;
+  const last = m.events.pop();
+  m.bm -= EV_DELTA[last];
+  if (last === 'but') m.buts = Math.max(0, m.buts - 1);
+  updateHeader();
+}
+
+function updateHeader() {
+  const a = S.matchA, b = S.matchB;
+  document.getElementById('hdr-a-bm').textContent = (a.bm > 0 ? '+' : '') + a.bm;
+  document.getElementById('hdr-b-bm').textContent = (b.bm > 0 ? '+' : '') + b.bm;
+  document.getElementById('hdr-a-buts').textContent = a.buts + ' but' + (a.buts !== 1 ? 's' : '');
+  document.getElementById('hdr-b-buts').textContent = b.buts + ' but' + (b.buts !== 1 ? 's' : '');
+}
+
+function bumpScore(team) {
+  const el = document.getElementById('hdr-' + team.toLowerCase() + '-bm');
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+}
+
+// ─── TIMER ────────────────────────────────────
+function toggleTimer() {
+  const t = S.timer;
+  if (t.running) {
+    clearInterval(t.iv);
+    t.running = false;
+    document.getElementById('timer-ctl').textContent = '▶ Reprendre';
+  } else {
+    t.running = true;
+    document.getElementById('timer-ctl').textContent = '⏸ Pause';
+    t.iv = setInterval(() => { t.secs++; renderTimer(); }, 1000);
+  }
+}
+function renderTimer() {
+  const m = Math.floor(S.timer.secs / 60), s = S.timer.secs % 60;
+  document.getElementById('timer-val').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// ─── TAB SWITCH ───────────────────────────────
+function switchTeam(team) {
+  S.activeTeam = team;
+  document.getElementById('panel-a').classList.toggle('hidden', team !== 'A');
+  document.getElementById('panel-b').classList.toggle('hidden', team !== 'B');
+  document.getElementById('tab-a').className = 'team-tab' + (team === 'A' ? ' tab-active-a' : '');
+  document.getElementById('tab-b').className = 'team-tab' + (team === 'B' ? ' tab-active-b' : '');
+}
+
+// ─── BILAN ────────────────────────────────────
+function d1Level(bm) {
+  if (bm <= 6)  return { n: 1, lbl: 'Insuffisant',          cls: 'lv1' };
+  if (bm <= 9)  return { n: 2, lbl: 'Fragile',              cls: 'lv2' };
+  if (bm <= 12) return { n: 3, lbl: 'Satisfaisant',         cls: 'lv3' };
+  return              { n: 4, lbl: 'Très bonne maîtrise',  cls: 'lv4' };
+}
+
+function matchPts(result, bo) {
+  if (result === 'gagné'  &&  bo) return 6;
+  if (result === 'gagné'  && !bo) return 5;
+  if (result === 'nul'    &&  bo) return 5;
+  if (result === 'perdu'  &&  bo) return 4;
+  if (result === 'nul'    && !bo) return 3;
+  return 2;
+}
+
+function autoD2(obs) {
+  const total = obs.passes + obs.pertes;
+  if (total === 0) return null;
+  const lr = obs.pertes / total;
+  const def = obs.defenses > 0;
+  if (lr > 0.60 || (obs.pertes > 3 && !def && obs.passes <= 2)) return 1;
+  if (lr > 0.35 || (!def && obs.passes < 3)) return 2;
+  if (lr <= 0.35 && obs.defenses >= 2) return 4;
+  if (lr <= 0.35 && def) return 3;
+  return 2;
+}
+
+function autoD3(obs) {
+  if (obs.fautes >= 4) return 1;
+  if (obs.fautes >= 2) return 2;
+  if (obs.fautes === 1) return 3;
+  return 4;
+}
+
+
+function lvLabel(n) {
+  return n ? `<span class="lv${n}">${LEVELS[n]}</span>` : '<span style="color:var(--light)">—</span>';
+}
+
+function buildLevelPicker(pid, dim, current, suggested) {
+  const field = 'lv' + dim;
+  const active = current != null ? current : suggested;
+  const hint   = current == null && suggested ? ' (auto)' : '';
+  return `<div style="font-size:10px;color:var(--light);margin-bottom:4px">Niveau${hint} :</div>
+  <div class="level-picker">
+    ${[1,2,3,4].map(n => `
+      <button class="lp-btn${active===n ? ' lp-sel-'+n : ''}"
+        onclick="setLv('${pid}','${field}',${n})"
+        title="${LEVELS[n]}">${n}</button>`).join('')}
+  </div>`;
+}
+
+function setLv(pid, field, n) {
+  if (S.players[pid]) {
+    S.players[pid][field] = n;
+    showBilan();
+  }
+}
+
+function showBilan() {
+  const a = S.matchA, b = S.matchB;
+  const resultA = a.buts > b.buts ? 'gagné' : a.buts < b.buts ? 'perdu' : 'nul';
+  const resultB = b.buts > a.buts ? 'gagné' : b.buts < a.buts ? 'perdu' : 'nul';
+  const boA = a.bm > 0, boB = b.bm > 0;
+  const ptsA = matchPts(resultA, boA), ptsB = matchPts(resultB, boB);
+  const lvA  = d1Level(a.bm), lvB = d1Level(b.bm);
+
+  const resultLabel = r => r === 'gagné' ? '🏆 Gagné' : r === 'nul' ? '🤝 Nul' : '❌ Perdu';
+
+  // All players merged
+  const allPlayers = [
+    ...S.teamA.players.map(p => ({ ...p, teamKey: 'A', teamName: S.teamA.name })),
+    ...S.teamB.players.map(p => ({ ...p, teamKey: 'B', teamName: S.teamB.name }))
+  ];
+
+  const playerCards = allPlayers.map(p => {
+    const obs = S.players[p.id];
+    if (!obs) return '';
+    const d2 = obs.lvD2 != null ? obs.lvD2 : autoD2(obs);
+    const d3 = obs.lvD3 != null ? obs.lvD3 : autoD3(obs);
+    // D4 : niveau renseigné pendant le match (engageLevel) ou override enseignant
+    const d4observed = obs.engageLevel;
+    const d4 = obs.lvD4 != null ? obs.lvD4 : d4observed;
+
+    const engLbls = ['','peu/pas engagé','engagement aléatoire','régulier en attaque','optimal att. + déf.'];
+
+    return `<div class="pb-card">
+      <div class="pb-name">
+        ${esc(obs.name)}
+        <span class="team-badge b${p.teamKey.toLowerCase()}">${esc(p.teamName)}</span>
+      </div>
+      <div class="dims-row">
+        <!-- D2 -->
+        <div class="dim-box">
+          <div class="dim-name">D2 — Joueur efficace</div>
+          <div class="dim-data">
+            🥏 Pertes <span style="opacity:.6">(catch/passe)</span> : <strong>${obs.pertes}</strong><br>
+            ✅ Passes réussies : <strong>${obs.passes}</strong><br>
+            🛡️ Défenses <span style="opacity:.6">(inter./frisbee)</span> : <strong>${obs.defenses}</strong>
+          </div>
+          <div class="dim-suggested">${lvLabel(d2)}</div>
+          ${buildLevelPicker(p.id,'D2',obs.lvD2,d2)}
+        </div>
+        <!-- D3 -->
+        <div class="dim-box">
+          <div class="dim-name">D3 — Respect règles</div>
+          <div class="dim-data">
+            ⚠️ Fautes <span style="opacity:.6">(contact/dist.)</span> : <strong>${obs.fautes}</strong>
+          </div>
+          <div class="dim-suggested">${lvLabel(d3)}</div>
+          ${buildLevelPicker(p.id,'D3',obs.lvD3,d3)}
+          <div style="font-size:10px;color:var(--light);margin-top:6px;line-height:1.4">
+            0 faute → TBM · 1 → Sat. · 2-3 → Fragile · 4+ → Insuf.
+          </div>
+        </div>
+        <!-- D4 -->
+        <div class="dim-box">
+          <div class="dim-name">D4 — Engagement</div>
+          <div class="dim-data">
+            🏃 Niveau observé :<br>
+            ${d4observed
+              ? `<strong>N${d4observed}</strong> — <em>${engLbls[d4observed]}</em>`
+              : '<span style="color:var(--light)">non renseigné</span>'}
+          </div>
+          <div class="dim-suggested">${lvLabel(d4)}</div>
+          ${buildLevelPicker(p.id,'D4',obs.lvD4,d4observed)}
+          <div style="font-size:10px;color:var(--light);margin-top:6px;line-height:1.4">
+            N1 = Insuf. · N2 = Fragile · N3 = Satisf. · N4 = TBM
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const scrollTop = document.getElementById('screen-bilan').scrollTop;
+
+  document.getElementById('screen-bilan').innerHTML = `
+    <div class="bilan-topbar">
+      <h1>📋 Bilan du match</h1>
+      <button class="btn-back" onclick="showScreen('match')">← Retour</button>
+    </div>
+
+    <!-- D1 -->
+    <div class="section-card">
+      <h2>D1 — L'équipe performante</h2>
+      <p class="subtitle">Score bonus/malus du match → niveau D1 (cumulé sur le tournoi)</p>
+      <div class="d1-teams">
+        <div class="d1-team ta">
+          <div class="d1-tname">${esc(S.teamA.name)}</div>
+          <div class="d1-buts">${a.buts} but${a.buts!==1?'s':''}</div>
+          <div class="d1-bm" style="color:var(--team-a)">${a.bm>0?'+':''}${a.bm} pts B/M</div>
+          <div class="d1-result">${resultLabel(resultA)} · ${boA ? '✅ BO' : '✗ sans BO'} → <strong>${ptsA} pts</strong></div>
+          <div class="d1-level ${lvA.cls}">${lvA.lbl}</div>
+        </div>
+        <div class="d1-team tb">
+          <div class="d1-tname">${esc(S.teamB.name)}</div>
+          <div class="d1-buts">${b.buts} but${b.buts!==1?'s':''}</div>
+          <div class="d1-bm" style="color:var(--team-b)">${b.bm>0?'+':''}${b.bm} pts B/M</div>
+          <div class="d1-result">${resultLabel(resultB)} · ${boB ? '✅ BO' : '✗ sans BO'} → <strong>${ptsB} pts</strong></div>
+          <div class="d1-level ${lvB.cls}">${lvB.lbl}</div>
+        </div>
+      </div>
+      <div class="d1-legend">
+        <strong>Niveaux D1 (score B/M) :</strong><br>
+        ≤ 6 pts = <span class="lv1">Insuffisant</span> &nbsp;|&nbsp;
+        7–9 pts = <span class="lv2">Fragile</span> &nbsp;|&nbsp;
+        10–12 pts = <span class="lv3">Satisfaisant</span> &nbsp;|&nbsp;
+        ≥ 13 pts = <span class="lv4">Très bonne maîtrise</span>
+      </div>
+    </div>
+
+    <!-- Critères référence -->
+    <div class="section-card">
+      <h2>Référentiel rapide D2 · D3 · D4</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;font-size:11px;border-collapse:collapse">
+          <tr style="background:#f8fafc">
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid var(--border)">Dim.</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid var(--border);color:#dc2626">1 — Insuf.</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid var(--border);color:#ea580c">2 — Fragile</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid var(--border);color:#16a34a">3 — Satisf.</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid var(--border);color:#2563eb">4 — Très bonne</th>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--border)">D2</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Perd bcp de frisbees, n'intervient pas en défense, passes limitées</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Perd souvent, défense rare, alternatives rares, passes courtes</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Perd quelques frisbees, ralentit l'attaque, alternatives variées</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Ne perd jamais, stoppe l'attaque, passes précises et variées</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--border)">D3</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Ne respecte pas les règles ni les décisions</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Bcp de fautes mais respecte les décisions</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Respecte les décisions, encore quelques fautes</td>
+            <td style="padding:6px 8px;border-bottom:1px solid var(--border)">Respecte et aide à faire respecter les règles</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px;font-weight:700">D4</td>
+            <td style="padding:6px 8px"><strong>N1</strong> — peu/pas engagé att. et déf.</td>
+            <td style="padding:6px 8px"><strong>N2</strong> — engagement aléatoire att. et déf.</td>
+            <td style="padding:6px 8px"><strong>N3</strong> — régulier att., aléatoire déf.</td>
+            <td style="padding:6px 8px"><strong>N4</strong> — régulier et optimal att. + déf.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Players -->
+    <div>
+      <h2 style="font-size:19px;font-weight:800;margin-bottom:14px">D2 · D3 · D4 — Par joueur</h2>
+      ${playerCards || '<p style="color:var(--light);text-align:center;padding:20px">Aucun joueur enregistré</p>'}
+    </div>
+
+    <div class="criteria-box">
+      <strong>Note pour l'enseignant :</strong> Les niveaux affichés sont des <em>suggestions automatiques</em> basées sur les comptages effectués par les observateurs. Vous pouvez ajuster chaque niveau via les boutons 1–2–3–4. D3 et D4 nécessitent une validation qualitative.<br><br>
+      <strong>D1 :</strong> Le niveau s'obtient par la somme des pts de match sur tout le tournoi (6 rencontres).
+    </div>
+
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimer le bilan</button>
+    <div style="height:30px"></div>
+  `;
+
+  showScreen('bilan');
+  requestAnimationFrame(() => {
+    document.getElementById('screen-bilan').scrollTop = scrollTop;
+  });
+}
+
+// ─── SCREEN NAV ───────────────────────────────
+function showScreen(name) {
+  ['setup','match','bilan'].forEach(s => {
+    document.getElementById('screen-' + s).classList.toggle('hidden', s !== name);
+  });
+}
+
+// ─── INIT ─────────────────────────────────────
+// Pré-remplir quelques joueurs par défaut pour faciliter la démo
+['A','B','A','B','A','B'].forEach((t,i) => addPlayer(t));
+</script>
+</body>
+</html>
